@@ -75,48 +75,108 @@ Evaluated against ground truth on all three samples (clause mode). Field accurac
 
 ### Struggles
 
-**Dual-dimension rules.** `7.3(ii)` — "No more than 10% of the total portfolio value shall consist of policies with a coverage amount exceeding $1,500,000" — encodes a filter ($1.5M threshold) and a portfolio limit (10%). The LLM consistently extracts the filter instead of the concentration limit. The rule can't be fully represented as a single constraint without losing information, and the LLM picks the wrong dimension.
+**Dual-dimension rules.** 7.3(ii) has two numbers that matter: 10% (the portfolio limit) and $1,500,000 (the filter defining which policies count). The LLM picks one and loses the other. This is a fundamental limitation — a single constraint can only hold one value, which is why we moved to constraints: list.
 
-**Operator direction on prohibitions.** `5.1(e)` — "must not have any payment more than 30 days overdue" — the LLM extracts `days_overdue > 30` (the prohibited condition) instead of `days_overdue <= 30` (the required constraint). Clauses phrased as prohibitions confuse the LLM on which side of the threshold to use.
+**Prohibition phrasing.** 5.1(e) says "must not have any payment more than 30 days overdue." The LLM extracts the prohibited condition (days_overdue > 30) instead of the passing threshold (days_overdue <= 30). When a clause is written as a prohibition rather than a requirement, the LLM gets the operator direction wrong.
 
-**Value completeness.** `5.1(f)` — the LLM drops "US" from "US territories", producing `['United States', 'territories']`. Minor but incorrect.
+**Incomplete list values.** 5.1(f) says "United States or its territories." The LLM produces ['United States', 'territories'] instead of ['United States', 'US territories']. Small but wrong.
 
-**Rule splitting.** `5.1(c)` encodes two independent rules. The LLM captures both constraints but combines them into one Rule object — the portfolio concentration limit is missed as a standalone rule.
+**Rule splitting.** 5.1(c) is genuinely two rules — a per-applicant credit score threshold and a portfolio concentration limit — written as one clause. The LLM sees one clause and outputs one rule, missing the second.
 
 ---
 
 ## How You Would Evaluate Accuracy at 500 Documents
 
-The core problem is ground truth. With 3 samples you write it by hand. With 500 documents you can't — the solution is a three-layer approach that builds ground truth incrementally.
+With 3 samples you write ground truth by hand. With 500 you can't — you need a systematic approach where ground truth grows as a byproduct of the evaluation process itself.
 
-**Layer 1 — Automated evaluation on all 500 documents.** `evaluate.py` runs on everything. Catches schema failures, hallucinations, missing rules, field mismatches. Free, but only as good as the ground truth you have.
+**Layer 1 — Automated validation on all 500 documents.** Checks what doesn't require ground truth: schema compliance, numeric hallucinations, JSON validity, rule count per clause. For documents where ground truth exists, also runs field-level accuracy and precision/recall. Free and fast, but correctness measurement is only possible where ground truth has been built.
 
-**Layer 2 — LLM-as-judge on a sample of ~50 documents.** A judge LLM receives the original clause, the extracted rule, and a rubric. Catches what the programmatic evaluator misses: formula equivalence, `applies_to` inference quality, branching correctness. Cost is roughly double the extraction cost on the sample.
+**Layer 2 — LLM-as-judge on a sample of ~50 documents.** A judge LLM receives the original clause, the extracted rule, and a rubric. Catches what the programmatic evaluator misses: formula equivalence, applies_to inference quality, branching correctness. Cost is roughly double the extraction cost on the sample.
 
-**Layer 3 — Human annotation on a stratified sample of ~20-30 documents.** Annotate strategically — not randomly. Prioritize: documents where the judge flagged low confidence, documents with complex conditional logic, one from each policy type seen. Two annotators per document; disagreements signal genuine ambiguity, which is a prompt or schema problem. This set becomes the gold standard for regression testing on every prompt change.
+**Layer 3 — Human annotation on a stratified sample of ~20-30 documents.** This is where ground truth gets created. Run the extractor first and use the output as a draft — reviewers correct rather than annotate from scratch. Two reviewers per document; where they agree that becomes ground truth, where they disagree the clause is genuinely ambiguous and signals a schema or prompt problem. Prioritize documents where Layer 2 flagged low confidence, complex conditional clauses, and one document per policy type seen. This set becomes the gold standard for regression testing on every prompt change, and grows organically as corrections accumulate from production traffic.
 
-**The feedback loop is what makes it scale.** Human corrections feed back into ground truth, which improves automated evaluation on the next run. After six months of production traffic, ground truth grows organically from real corrections without a dedicated annotation effort.
-
-**The most important metric is confidence calibration, not F1.** A pipeline that knows when it's wrong is more operationally valuable than one that's slightly more accurate but doesn't know its own failure modes. If rules at 0.95 confidence are only correct 70% of the time, the validator thresholds are broken and the human review queue is missing real errors.
+The most important metric is confidence calibration, not F1. A pipeline that knows when it's wrong is more operationally valuable than one that's slightly more accurate but doesn't know its own failure modes. If rules at 0.95 confidence are only correct 70% of the time, the validator thresholds are broken and real errors are slipping through the human review queue undetected.
 
 ---
 
 ## What You Would Change for a Production System
 
-### Architecture and scaling
+**Document ingestion**
+Right now the pipeline takes plain text. In production, documents arrive as PDFs, scanned images, and Word files. You need an ingestion layer that handles format conversion and text extraction before the pipeline starts — including reading text from scanned document images. This is where most production pipelines fail first — not in the extraction step.
 
-The biggest structural change is replacing the CLI script with an event-driven pipeline. Document uploaded → extraction job triggered → worker runs the pipeline → results published to an output queue → downstream consumers subscribe. No polling. Failed jobs go to a dead letter queue with exponential backoff retry. This decouples ingestion from extraction from consumption — each can scale independently.
+**Event-driven architecture**
+Replace the CLI script with a job queue. Document uploaded → extraction job triggered → worker runs the pipeline → results published to an output queue → downstream consumers subscribe. No polling. Failed jobs go to a dead letter queue with exponential backoff retry. This decouples ingestion from extraction from consumption — each can scale independently.
 
-For LLM call volume, switch to section mode as the default — 7x fewer API calls than clause mode with equivalent quality. For sections with 20+ clauses, batch into groups of 10, repeating the section header and preamble on each batch so the LLM always has context. At 500 documents × 10 sections average, that's roughly 5,000 API calls vs 35,000 in clause mode — a meaningful cost difference at scale.
+**LLM call volume**
+Switch to section mode as the default — 7x fewer API calls than clause mode with equivalent quality. For sections with 20+ clauses, batch into groups of 10, repeating the section header and preamble on each batch. At 500 documents × 10 sections average, that's roughly 5,000 API calls vs 35,000 in clause mode. When the LLM API goes down, you need circuit breakers, fallback behavior, and rate limit management — not just retry logic.
 
-### Data and storage
+**Data and storage**
+Plain JSON is fine for a pilot. At scale, start with compressed JSON — 60-70% size reduction with zero schema changes. Move to Parquet if analytics queries over constraint values become a bottleneck.
 
-Plain JSON is fine for a pilot. At scale, start with compressed JSON — 60-70% size reduction with zero schema changes. Move to Parquet if analytics queries over constraint values become a bottleneck; columnar storage is significantly faster for that access pattern.
+**Schema evolution**
+Every extracted rule stores the schema version it was produced with — when the schema evolves, old rules remain readable against their version rather than silently breaking downstream consumers. raw_text is hashed at extraction time and verified at consumption time — audit tools depend entirely on verbatim text and silent modification breaks them in ways that are hard to detect.
 
-Two integrity concerns worth handling early: schema versioning and raw_text hashing. Every extracted rule should store the schema version it was produced with — when the schema evolves, old rules remain readable against their version rather than silently breaking downstream consumers. And `raw_text` should be hashed at extraction time and verified at consumption time — audit and explainability tools depend entirely on verbatim text, and silent modification breaks them in ways that are hard to detect.
+**Data drift**
+Policy document formats change over time. Your regex parser breaks silently when section headers change format. Your prompt stops working when new rule types appear that your examples don't cover. You need monitoring that detects when extraction quality degrades — not just whether the pipeline runs, but whether what it produces is still correct.
 
-### Observability and failure modes
+**Human review loop**
+Low confidence rules go to a review queue. You need a review interface, a time limit on how long a rule can sit unreviewed before downstream systems are blocked, and a way to handle rules stuck in review that consumers are waiting on. Every correction feeds back as a prompt improvement signal and confidence threshold calibration data point.
 
-Emit structured events at each pipeline stage: document received, section parsed, extraction started, extraction completed, extraction failed, validation flagged. The most operationally valuable event is `review.completed` — every human correction is simultaneously a prompt improvement signal and a confidence threshold calibration data point.
+**Observability**
+Emit structured events at each pipeline stage: document received, section parsed, extraction started, extraction completed, extraction failed, validation flagged. The most valuable event is review.completed — it closes the feedback loop between human corrections and pipeline improvement.
 
-The two most likely downstream failure points are variable name mismatches between the extractor and the consuming system's data model — fix with a field mapping registry — and tag inconsistency making tag-based queries return incomplete results — fix by enforcing a controlled vocabulary at validation time and rejecting unknown tags. A third subtler failure: confidence miscalibration silently flooding or starving the human review queue. Track what percentage of rules at each confidence band are actually correct — if rules at 0.95 confidence are only correct 70% of the time, the validator thresholds are wrong and real errors are slipping through.
+**Downstream failure modes**
+Two failure points worth handling early. Tag inconsistency making tag-based queries return incomplete results — fix by enforcing a controlled vocabulary at validation time. Confidence miscalibration silently flooding or starving the human review queue — track what percentage of rules at each confidence band are actually correct and recalibrate thresholds when they drift.
+
+---
+
+## What Was Deliberately Excluded
+
+**Enforcement level** — hard block vs soft flag — was excluded from the schema entirely. Every clause uses mandatory language regardless of whether it's an eligibility rule or a concentration limit; enforcement is a business logic decision that belongs in the rule engine, not the extractor. 
+
+**A compiled expression language for rule evaluation** was considered and rejected — over-engineered without a known downstream rule engine to design for. The schema is an interchange format. Execution is someone else's problem until we know whose.
+
+---
+
+## JSON Schema
+
+```
+Rule
+├── id                         # "document_id:section:clause"
+├── source
+│   ├── document_id
+│   ├── section               # "5.1", "7.3"
+│   ├── section_title         # "Eligibility Criteria"
+│   ├── clause                # "e", "ii", "d"
+│   └── raw_text              # verbatim original
+├── applies_to                # applicant | policy | portfolio
+├── variables []
+│   └── Variable
+│       ├── name              # "debt_to_income_ratio"
+│       └── unit              # "percent", "USD", "days", null
+├── branches []               # ordered; first match wins
+│   └── Branch
+│       ├── condition         # Condition | "default"
+│       └── outcome
+├── confidence                # float [0–1]
+├── tags []                   # "eligibility", "fee", "concentration"
+└── version                   # schema version
+
+Condition                      # recursive tree for complex logic
+├── logic                      # AND | OR | null
+├── clauses []                 # recursive list of Condition | null
+├── subject                    # variable being tested
+├── operator                   # > | < | >= | <= | == | != | in | between
+└── value                      # number | string | array
+
+Outcome
+├── constraints []             # multiple constraints for dual-dimension rules
+│   └── Constraint
+│       ├── subject
+│       ├── operator
+│       ├── value
+│       └── unit
+└── formula                    # null for non-fee rules
+    ├── expression             # "base_fee + (loan_amount * 0.01)"
+    └── result_unit
+```
