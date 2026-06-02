@@ -1,0 +1,250 @@
+{
+  "extraction_metadata": {
+    "document_id": "sample3",
+    "mode": "clause",
+    "model": "gpt-4o-mini",
+    "extracted_at": "2026-06-02T07:57:27Z",
+    "total_rules": 5,
+    "flagged_rules": 0,
+    "average_confidence": 0.95
+  },
+  "rules": [
+    {
+      "id": "sample3_12.2_a_1",
+      "source": {
+        "document_id": "sample3",
+        "section": "12.2",
+        "section_title": "Fees And Charges",
+        "clause": "a",
+        "raw_text": "Processing Fee: A one-time fee of $500 per application, due upon submission."
+      },
+      "applies_to": "policy",
+      "variables": [
+        {
+          "name": "processing_fee",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [],
+            "formula": {
+              "expression": "processing_fee = 500",
+              "result_unit": "USD"
+            }
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "fee",
+        "processing"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample3_12.2_b_1",
+      "source": {
+        "document_id": "sample3",
+        "section": "12.2",
+        "section_title": "Fees And Charges",
+        "clause": "b",
+        "raw_text": "Annual Service Fee: 0.35% per annum of the outstanding coverage amount, payable monthly."
+      },
+      "applies_to": "policy",
+      "variables": [
+        {
+          "name": "outstanding_coverage_amount",
+          "unit": "USD"
+        },
+        {
+          "name": "annual_service_fee",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [],
+            "formula": {
+              "expression": "annual_service_fee = 0.35 * outstanding_coverage_amount / 100",
+              "result_unit": "USD"
+            }
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "fee",
+        "annual_service"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample3_12.2_c_1",
+      "source": {
+        "document_id": "sample3",
+        "section": "12.2",
+        "section_title": "Fees And Charges",
+        "clause": "c",
+        "raw_text": "Late Payment Fee: If any scheduled payment is more than 15 days overdue, a fee of 2% of the overdue amount shall apply, subject to a minimum of $25 and a maximum of $500."
+      },
+      "applies_to": "policy",
+      "variables": [
+        {
+          "name": "overdue_amount",
+          "unit": "USD"
+        },
+        {
+          "name": "late_payment_fee",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": {
+            "logic": "AND",
+            "clauses": null,
+            "subject": "overdue_days",
+            "operator": ">",
+            "value": 15
+          },
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "late_payment_fee",
+                "operator": ">=",
+                "value": 25,
+                "unit": "USD"
+              },
+              {
+                "subject": "late_payment_fee",
+                "operator": "<=",
+                "value": 500,
+                "unit": "USD"
+              }
+            ],
+            "formula": {
+              "expression": "late_payment_fee = 0.02 * overdue_amount",
+              "result_unit": "USD"
+            }
+          }
+        },
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "late_payment",
+        "fee"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample3_12.2_d_1",
+      "source": {
+        "document_id": "sample3",
+        "section": "12.2",
+        "section_title": "Fees And Charges",
+        "clause": "d",
+        "raw_text": "Early Termination Fee: If the policy is cancelled within the first 24 months, the applicant shall pay a fee equal to 3 months of the annual service fee."
+      },
+      "applies_to": "applicant",
+      "variables": [
+        {
+          "name": "annual_service_fee",
+          "unit": "USD"
+        },
+        {
+          "name": "early_termination_fee",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": {
+            "logic": null,
+            "clauses": null,
+            "subject": null,
+            "operator": null,
+            "value": null
+          },
+          "outcome": {
+            "constraints": [],
+            "formula": {
+              "expression": "early_termination_fee = 3 * annual_service_fee / 12",
+              "result_unit": "USD"
+            }
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "early_termination_fee",
+        "fee",
+        "policy_cancellation"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample3_12.2_e_1",
+      "source": {
+        "document_id": "sample3",
+        "section": "12.2",
+        "section_title": "Fees And Charges",
+        "clause": "e",
+        "raw_text": "Reinstatement Fee: $250 if the policy is reinstated after a lapse of more than 60 days."
+      },
+      "applies_to": "policy",
+      "variables": [
+        {
+          "name": "reinstatement_fee",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": {
+            "logic": null,
+            "clauses": null,
+            "subject": "lapse_days",
+            "operator": ">",
+            "value": 60
+          },
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "reinstatement_fee",
+                "operator": "==",
+                "value": 250,
+                "unit": "USD"
+              }
+            ],
+            "formula": null
+          }
+        },
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "fee",
+        "reinstatement"
+      ],
+      "version": "1.0"
+    }
+  ]
+}

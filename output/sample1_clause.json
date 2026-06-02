@@ -1,0 +1,374 @@
+{
+  "extraction_metadata": {
+    "document_id": "sample1",
+    "mode": "clause",
+    "model": "gpt-4o-mini",
+    "extracted_at": "2026-06-02T07:56:27Z",
+    "total_rules": 8,
+    "flagged_rules": 0,
+    "average_confidence": 0.95
+  },
+  "rules": [
+    {
+      "id": "sample1_5.1_a_1",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "a",
+        "raw_text": "Each applicant must have a credit score of at least 680."
+      },
+      "applies_to": "applicant",
+      "variables": [
+        {
+          "name": "credit_score",
+          "unit": null
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "credit_score",
+                "operator": ">=",
+                "value": 680,
+                "unit": null
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "credit_score",
+        "eligibility"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample1_5.1_b_1",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "b",
+        "raw_text": "The maximum coverage amount for any single policy shall not exceed $2,000,000."
+      },
+      "applies_to": "policy",
+      "variables": [
+        {
+          "name": "maximum_coverage_amount",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "maximum_coverage_amount",
+                "operator": "<=",
+                "value": 2000000,
+                "unit": "USD"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "coverage_limit",
+        "policy"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample1_5.1_c_1",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "c",
+        "raw_text": "The applicant must have a credit score of at least 680."
+      },
+      "applies_to": "applicant",
+      "variables": [
+        {
+          "name": "credit_score",
+          "unit": null
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "credit_score",
+                "operator": ">=",
+                "value": 680,
+                "unit": null
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "credit_score",
+        "eligibility"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample1_5.1_c_2",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "c",
+        "raw_text": "The applicant must have a credit score of at least 680, provided that no more than 15% of the total portfolio value may consist of policies for applicants with credit scores between 680 and 700."
+      },
+      "applies_to": "portfolio",
+      "variables": [
+        {
+          "name": "total_portfolio_value",
+          "unit": "USD"
+        },
+        {
+          "name": "percent_of_applicants_with_credit_scores_680_to_700",
+          "unit": "percent"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "percent_of_applicants_with_credit_scores_680_to_700",
+                "operator": "<=",
+                "value": 15,
+                "unit": "percent"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "portfolio_value",
+        "credit_score_range"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample1_5.1_d_1",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "d",
+        "raw_text": "The debt-to-income ratio shall not exceed 40%, or 45% if the applicant has a co-signer with a credit score above 750."
+      },
+      "applies_to": "applicant",
+      "variables": [
+        {
+          "name": "debt_to_income_ratio",
+          "unit": "percent"
+        },
+        {
+          "name": "cosigner_credit_score",
+          "unit": null
+        }
+      ],
+      "branches": [
+        {
+          "condition": {
+            "logic": null,
+            "clauses": null,
+            "subject": "cosigner_credit_score",
+            "operator": ">",
+            "value": 750
+          },
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "debt_to_income_ratio",
+                "operator": "<=",
+                "value": 45,
+                "unit": "percent"
+              }
+            ],
+            "formula": null
+          }
+        },
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "debt_to_income_ratio",
+                "operator": "<=",
+                "value": 40,
+                "unit": "percent"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "dti",
+        "co_signer",
+        "eligibility"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample1_5.1_e_1",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "e",
+        "raw_text": "The applicant must not have any payment more than 30 days overdue as of the Review Date."
+      },
+      "applies_to": "applicant",
+      "variables": [],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "payment_overdue",
+                "operator": "<=",
+                "value": 30,
+                "unit": "days"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "payment_overdue",
+        "eligibility"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample1_5.1_f_1",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "f",
+        "raw_text": "The applicant must reside in the United States or its territories."
+      },
+      "applies_to": "applicant",
+      "variables": [],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "residency",
+                "operator": "in",
+                "value": [
+                  "United States",
+                  "territories"
+                ],
+                "unit": null
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "residency",
+        "eligibility"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample1_5.1_g_1",
+      "source": {
+        "document_id": "sample1",
+        "section": "5.1",
+        "section_title": "Eligibility Criteria",
+        "clause": "g",
+        "raw_text": "No applicant shall have an annual income below $35,000, unless the applicant is enrolled in an approved assistance program, in which case the minimum income shall be $25,000."
+      },
+      "applies_to": "applicant",
+      "variables": [
+        {
+          "name": "annual_income",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": {
+            "logic": null,
+            "clauses": null,
+            "subject": "annual_income",
+            "operator": "<",
+            "value": 35000
+          },
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "annual_income",
+                "operator": ">=",
+                "value": 35000,
+                "unit": "USD"
+              }
+            ],
+            "formula": null
+          }
+        },
+        {
+          "condition": {
+            "logic": "AND",
+            "clauses": null,
+            "subject": "enrollment_in_assistance_program",
+            "operator": "==",
+            "value": true
+          },
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "annual_income",
+                "operator": ">=",
+                "value": 25000,
+                "unit": "USD"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "annual_income",
+        "eligibility",
+        "assistance_program"
+      ],
+      "version": "1.0"
+    }
+  ]
+}

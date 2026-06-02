@@ -1,0 +1,220 @@
+{
+  "extraction_metadata": {
+    "document_id": "sample2",
+    "mode": "clause",
+    "model": "gpt-4o-mini",
+    "extracted_at": "2026-06-02T07:57:04Z",
+    "total_rules": 5,
+    "flagged_rules": 0,
+    "average_confidence": 0.95
+  },
+  "rules": [
+    {
+      "id": "sample2_7.3_i_1",
+      "source": {
+        "document_id": "sample2",
+        "section": "7.3",
+        "section_title": "Portfolio Concentration Limits",
+        "clause": "i",
+        "raw_text": "No more than 25% of the total portfolio value shall consist of policies originating from any single state."
+      },
+      "applies_to": "portfolio",
+      "variables": [
+        {
+          "name": "total_portfolio_value",
+          "unit": "USD"
+        },
+        {
+          "name": "state_policy_value",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "state_policy_value",
+                "operator": "<=",
+                "value": 0.25,
+                "unit": null
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "portfolio",
+        "concentration_limits"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample2_7.3_ii_1",
+      "source": {
+        "document_id": "sample2",
+        "section": "7.3",
+        "section_title": "Portfolio Concentration Limits",
+        "clause": "ii",
+        "raw_text": "No more than 10% of the total portfolio value shall consist of policies with a coverage amount exceeding $1,500,000."
+      },
+      "applies_to": "portfolio",
+      "variables": [
+        {
+          "name": "total_portfolio_value",
+          "unit": "USD"
+        },
+        {
+          "name": "coverage_amount",
+          "unit": "USD"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "coverage_amount",
+                "operator": ">",
+                "value": 1500000,
+                "unit": "USD"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "portfolio",
+        "coverage_limit"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample2_7.3_iii_1",
+      "source": {
+        "document_id": "sample2",
+        "section": "7.3",
+        "section_title": "Portfolio Concentration Limits",
+        "clause": "iii",
+        "raw_text": "The weighted average credit score across all policies in the portfolio shall not be less than 720."
+      },
+      "applies_to": "portfolio",
+      "variables": [
+        {
+          "name": "weighted_average_credit_score",
+          "unit": null
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "weighted_average_credit_score",
+                "operator": ">=",
+                "value": 720,
+                "unit": null
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "credit_score",
+        "portfolio_limit"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample2_7.3_iv_1",
+      "source": {
+        "document_id": "sample2",
+        "section": "7.3",
+        "section_title": "Portfolio Concentration Limits",
+        "clause": "iv",
+        "raw_text": "No more than 5% of the total portfolio value shall consist of policies where the primary applicant is under 25 years of age."
+      },
+      "applies_to": "portfolio",
+      "variables": [
+        {
+          "name": "total_portfolio_value",
+          "unit": "USD"
+        },
+        {
+          "name": "percent_under_25",
+          "unit": "percent"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "percent_under_25",
+                "operator": ">",
+                "value": 5,
+                "unit": "percent"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "portfolio_limit",
+        "age_restriction"
+      ],
+      "version": "1.0"
+    },
+    {
+      "id": "sample2_7.3_v_1",
+      "source": {
+        "document_id": "sample2",
+        "section": "7.3",
+        "section_title": "Portfolio Concentration Limits",
+        "clause": "v",
+        "raw_text": "The weighted average debt-to-income ratio shall not exceed 35%."
+      },
+      "applies_to": "portfolio",
+      "variables": [
+        {
+          "name": "weighted_average_debt_to_income_ratio",
+          "unit": "percent"
+        }
+      ],
+      "branches": [
+        {
+          "condition": "default",
+          "outcome": {
+            "constraints": [
+              {
+                "subject": "weighted_average_debt_to_income_ratio",
+                "operator": "<=",
+                "value": 35,
+                "unit": "percent"
+              }
+            ],
+            "formula": null
+          }
+        }
+      ],
+      "confidence": 0.95,
+      "tags": [
+        "dti",
+        "portfolio_limit"
+      ],
+      "version": "1.0"
+    }
+  ]
+}
