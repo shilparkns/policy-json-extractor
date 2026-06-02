@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+output/*
+!output/sample1_clause.json
+!output/sample2_clause.json
+!output/sample3_clause.json
+run.sh
+docs/
