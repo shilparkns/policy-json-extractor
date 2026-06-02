@@ -15,6 +15,7 @@ cp .env.example .env
 ```
 
 **Extract:**
+
 ```bash
 python extract.py --input-dir samples/ --mode clause   # all samples
 python extract.py --input samples/sample1.txt --mode clause  # single file
@@ -23,6 +24,7 @@ python extract.py --input samples/sample1.txt --mode clause  # single file
 Output is written to `output/<document_id>_<mode>.json`.
 
 **Evaluate:**
+
 ```bash
 python evaluate.py --predicted output/ --mode clause          # all samples
 python evaluate.py --predicted output/sample1_clause.json     # single file
@@ -33,7 +35,7 @@ python evaluate.py --predicted output/ --mode clause --detail # with rule-by-rul
 
 ## Approach and Design Decisions
 
-### Use regex for structure, LLM for semantics — never the reverse.
+### Use regex for structure, LLM for semantics.
 
 Regex detects section headers, extracts preambles, and splits clauses by markers like `(a)`, `(b)`, `(i)`. This is deterministic, fast, and correct — policy documents have consistent enough structure for it. The LLM only sees the clause text, which is what it's actually good at: interpreting conditional logic, identifying variables, and mapping semantics to a typed schema.
 
@@ -48,12 +50,6 @@ Clause mode (one API call per clause) produces more precise output — the LLM h
 A rule with a baseline and an exception is one Rule object with two branches, not two separate rules. `5.1(d)` is one rule; `5.1(g)` is one rule. Only clauses encoding genuinely independent constraints — like `5.1(c)` — are split into multiple Rule objects. This keeps the schema clean and avoids artificial rule proliferation.
 
 Outcomes use `constraints: list[Constraint]` rather than a singular constraint, so a rule like `7.3(ii)` can express both a filter and a portfolio limit in one outcome. Fees use `formula` — a computed expression is more faithful than forcing a fee into a threshold constraint.
-
-### What we deliberately left out.
-
-**Enforcement levels** (`hard_block` / `soft_flag` / `advisory`) were removed from the schema. They're not derivable from document text — "shall not exceed" appears in both hard eligibility rules and soft portfolio guidelines. Enforcement belongs in the business logic layer, not the extraction layer.
-
-**An expression language for rule evaluation** was never considered. Without a known rule engine downstream, building an evaluatable expression format would be over-engineering against a requirement that doesn't exist yet.
 
 ### Validation runs three checks on every LLM response.
 
@@ -123,4 +119,4 @@ Two integrity concerns worth handling early: schema versioning and raw_text hash
 
 Emit structured events at each pipeline stage: document received, section parsed, extraction started, extraction completed, extraction failed, validation flagged. The most operationally valuable event is `review.completed` — every human correction is simultaneously a prompt improvement signal and a confidence threshold calibration data point.
 
-The two most likely downstream failure points are `source_hint` field name mismatches between the extractor and the consuming system's data model — fix with a field mapping registry — and tag inconsistency making tag-based queries return incomplete results — fix by enforcing a controlled vocabulary at validation time and rejecting unknown tags. A third subtler failure: confidence miscalibration silently flooding or starving the human review queue. Track what percentage of rules at each confidence band are actually correct — if rules at 0.95 confidence are only correct 70% of the time, the validator thresholds are wrong and real errors are slipping through.
+The two most likely downstream failure points are variable name mismatches between the extractor and the consuming system's data model — fix with a field mapping registry — and tag inconsistency making tag-based queries return incomplete results — fix by enforcing a controlled vocabulary at validation time and rejecting unknown tags. A third subtler failure: confidence miscalibration silently flooding or starving the human review queue. Track what percentage of rules at each confidence band are actually correct — if rules at 0.95 confidence are only correct 70% of the time, the validator thresholds are wrong and real errors are slipping through.
